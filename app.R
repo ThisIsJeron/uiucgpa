@@ -17,15 +17,17 @@ ui <- fluidPage(
       sidebarPanel(
         selectInput("year",
                     "Year:",
-                    c(gpa$Year)),
+                    distinct(gpa, Year)),
         
         selectInput("term",
                     "Term:",
-                    c(gpa$Term)),
+                    distinct(gpa, Term)),
         
         selectInput("subject",
                     "Subject:",
-                    c(gpa$Subject))
+                    distinct(gpa, Subject)),
+        
+        uiOutput("course")
         
       ),
       
@@ -36,9 +38,25 @@ ui <- fluidPage(
 )
 
 server <- function(input, output) {
-   
-   output$distPlot <- renderPlot({
-     plot <- filter(gpa, Year = input$year) %>% filter (gpa, Term = input$term) %>% filter(gpa, Subject = input$subject)
+  
+   output$course <- renderUI({
+     course <- filter(gpa, Year == input$year)
+     course <- filter (course, Term == input$term) 
+     course <- filter(course, Subject == input$subject)
+     selectInput("course",
+                 "Course Number:",
+                 distinct(course, Number))
+   })
+   output$distPlot <- renderPlotly({
+     plot <- filter(gpa, Year == input$year)
+     plot <- filter (plot, Term == input$term) 
+     plot <- filter(plot, Subject == input$subject)
+     plot <- filter(plot, Number == input$course)
+     plot <- data.frame(
+       letter = c("A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F"),
+       number = c(plot$"A+", plot$"A", plot$"A-", plot$"B+", plot$"B", plot$"B-", plot$"C+", plot$"C", plot$"C-", plot$"D+", plot$"D", plot$"D-", plot$"F")
+     )
+     plot <- ggplot(data = plot, aes(x = letter, y = number)) + geom_bar(stat = "identity")
    })
 }
 
